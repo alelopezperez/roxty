@@ -3,6 +3,8 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
 };
+mod token;
+use token::Token;
 
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;
@@ -72,10 +74,6 @@ impl Scanner {
     }
 }
 
-#[derive(Debug)]
-struct Token {}
-impl Token {}
-
 fn run(source: &str) {
     let scanner = Scanner::new(source);
 
@@ -90,5 +88,5 @@ fn error(line: usize, message: String) {
     report(line, "".to_string(), message);
 }
 fn report(line: usize, donde: String, message: String) {
-    eprintln!("line {} Error {}: {}", line, donde, message);
+    eprintln!("[line {}] Error {}: {}", line, donde, message);
 }
