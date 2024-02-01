@@ -1,6 +1,7 @@
-use std::fmt::format;
+use enum_stringify::EnumStringify;
 
-#[derive(Debug)]
+#[derive(Debug, EnumStringify, Clone)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum TokenType {
     LEFT_PAREN,
     RIGHT_PAREN,
@@ -50,7 +51,7 @@ pub enum TokenType {
     EOF,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
     lexeme: String,

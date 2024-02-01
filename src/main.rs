@@ -1,11 +1,7 @@
-use std::{
-    env, fmt,
-    io::Write,
-    path::{Path, PathBuf},
-};
+use std::{env, fmt, io::Write};
+mod scanner;
 mod token;
-use token::Token;
-
+use scanner::Scanner;
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;
 
@@ -36,13 +32,17 @@ fn main() -> Result<(), ArgsQuantityError> {
     }
 }
 
-fn run_file(path: &str) {
+fn run_file(path: &str) -> Result<(), (usize, String)> {
     match std::fs::read_to_string(path) {
-        Ok(file) => {
-            run(&file);
-        }
+        Ok(file) => match run(&file) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                error(err.0, err.1.clone());
+                Err(err)
+            }
+        },
         Err(_error) => panic!("File Does not exists"),
-    };
+    }
 }
 fn run_prompt() {
     let mut line = String::new();
@@ -59,29 +59,22 @@ fn run_prompt() {
             break;
         }
 
-        run(&line);
+        match run(&line) {
+            Ok(_) => {}
+            Err(err) => error(err.0, err.1),
+        }
     }
 }
 
-struct Scanner {}
-impl Scanner {
-    pub fn new(source: &str) -> Self {
-        Self {}
-    }
+fn run(source: &str) -> Result<(), (usize, String)> {
+    let mut scanner = Scanner::new(source);
 
-    pub fn scan_tokens(&self) -> Vec<Token> {
-        Vec::new()
-    }
-}
-
-fn run(source: &str) {
-    let scanner = Scanner::new(source);
-
-    let tokens = scanner.scan_tokens();
+    let tokens = scanner.scan_tokens()?;
 
     for token in tokens {
         println!("{:?}", token);
     }
+    Ok(())
 }
 
 fn error(line: usize, message: String) {
