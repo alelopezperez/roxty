@@ -58,6 +58,7 @@ pub enum Object {
     Null,
 }
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
@@ -74,7 +75,7 @@ impl Token {
         }
     }
 
-    pub fn to_string(&self) -> String {
-        format!("{} {}  ", self.token_type, self.lexeme,)
-    }
+    // pub fn to_string(&self) -> String {
+    //     format!("{} {}  ", self.token_type, self.lexeme,)
+    // }
 }

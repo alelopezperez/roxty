@@ -18,7 +18,7 @@ fn main() -> Result<(), ArgsQuantityError> {
         2 => {
             println!("run File {:?}", args);
             let file_path = &args[1];
-            run_file(file_path);
+            run_file(file_path).unwrap();
             Ok(())
         }
         1 => {
