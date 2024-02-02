@@ -72,7 +72,7 @@ fn run(source: &str) -> Result<(), (usize, String)> {
     let tokens = scanner.scan_tokens()?;
 
     for token in tokens {
-        println!("{:?}", token);
+        println!("TOKTOK::{:?}", token);
     }
     Ok(())
 }

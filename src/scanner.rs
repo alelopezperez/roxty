@@ -178,7 +178,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let number_literal = self.source[self.start + 1..self.current - 1]
+        let number_literal = self.source[self.start..self.current]
             .parse::<f64>()
             .unwrap();
         self.add_token_list(TokenType::NUMBER, Object::Number(number_literal));
