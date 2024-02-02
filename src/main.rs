@@ -45,9 +45,8 @@ fn run_file(path: &str) -> Result<(), (usize, String)> {
     }
 }
 fn run_prompt() {
-    let mut line = String::new();
-
     loop {
+        let mut line = String::new();
         print!("> ");
         std::io::stdout().flush().unwrap();
 
@@ -68,6 +67,7 @@ fn run_prompt() {
 
 fn run(source: &str) -> Result<(), (usize, String)> {
     let mut scanner = Scanner::new(source);
+    println!("PRINT SOURCE {}", source);
 
     let tokens = scanner.scan_tokens()?;
 

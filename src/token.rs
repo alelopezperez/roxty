@@ -1,6 +1,6 @@
 use enum_stringify::EnumStringify;
 
-#[derive(Debug, EnumStringify, Clone)]
+#[derive(Debug, EnumStringify, Clone, Copy)]
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub enum TokenType {
     LEFT_PAREN,
@@ -52,14 +52,20 @@ pub enum TokenType {
 }
 
 #[derive(Debug, Clone)]
+pub enum Object {
+    String(String),
+    Number(f64),
+    Null,
+}
+#[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
-    literal: String,
+    literal: Object,
     line: usize,
 }
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: String, line: usize) -> Self {
+    pub fn new(token_type: TokenType, lexeme: String, literal: Object, line: usize) -> Self {
         Self {
             token_type,
             lexeme,
@@ -69,6 +75,6 @@ impl Token {
     }
 
     pub fn to_string(&self) -> String {
-        format!("{} {} {} ", self.token_type, self.lexeme, self.literal)
+        format!("{} {}  ", self.token_type, self.lexeme,)
     }
 }
