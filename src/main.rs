@@ -35,8 +35,13 @@ fn main() -> Result<(), ArgsQuantityError> {
 fn run_file(path: &str) -> Result<(), (usize, String)> {
     match std::fs::read_to_string(path) {
         Ok(file) => match run(&file) {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                println!("dentro de ok");
+                Ok(())
+            }
             Err(err) => {
+                println!("dentro de err");
+
                 error(err.0, err.1.clone());
                 Err(err)
             }
@@ -69,8 +74,11 @@ fn run(source: &str) -> Result<(), (usize, String)> {
     let mut scanner = Scanner::new(source);
     println!("PRINT SOURCE {}", source);
 
+    println!("\n\n\n aqui empiez");
+
     let tokens = scanner.scan_tokens()?;
 
+    println!("\n\n\n aqui termino de escanear");
     for token in tokens {
         println!("TOKTOK::{:?}", token);
     }

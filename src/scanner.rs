@@ -56,10 +56,7 @@ impl<'a> Scanner<'a> {
 
     fn scan_token(&mut self) -> Result<(), (usize, String)> {
         let c = self.advance();
-        println!(" Hello {c}");
-
-        println!("{:?}", self.tokens);
-
+        println!("matching {}", self.line);
         match c {
             '(' => self.add_token(TokenType::LEFT_PAREN),
             ')' => self.add_token(TokenType::RIGHT_PAREN),
@@ -146,11 +143,12 @@ impl<'a> Scanner<'a> {
     }
 
     fn string(&mut self) -> Result<(), (usize, String)> {
+        println!("Empezo string");
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
-                self.advance();
             }
+            self.advance();
         }
 
         if self.is_at_end() {
@@ -207,7 +205,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn add_token(&mut self, tipo: TokenType) -> Result<(), (usize, String)> {
-        self.add_token_list(tipo, Object::String("null".to_string()));
+        self.add_token_list(tipo, Object::Null);
         Ok(())
     }
 
