@@ -1,7 +1,11 @@
 use std::{env, fmt, io::Write};
+mod ast;
+mod parser;
 mod scanner;
 mod token;
+use ast::{Expr, LoxVal};
 use scanner::Scanner;
+use token::Token;
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;
 
@@ -13,6 +17,29 @@ impl fmt::Display for ArgsQuantityError {
 
 fn main() -> Result<(), ArgsQuantityError> {
     let args: Vec<String> = env::args().collect();
+
+    let to_print = ast::Expr::Binary(
+        Box::new(ast::Expr::Unary(
+            Token::new(
+                token::TokenType::MINUS,
+                "-".to_string(),
+                token::Object::Null,
+                1,
+            ),
+            Box::new(Expr::Literal(LoxVal::Number(20.0))),
+        )),
+        Token::new(
+            token::TokenType::STAR,
+            "*".to_string(),
+            token::Object::Null,
+            1,
+        ),
+        Box::new(ast::Expr::Grouping(Box::new(Expr::Literal(
+            ast::LoxVal::Number(123.2),
+        )))),
+    );
+
+    println!("{:?}", to_print);
 
     match args.len() {
         2 => {
@@ -79,9 +106,11 @@ fn run(source: &str) -> Result<(), (usize, String)> {
     let tokens = scanner.scan_tokens()?;
 
     println!("\n\n\n aqui termino de escanear");
-    for token in tokens {
+    for token in tokens.iter() {
         println!("TOKTOK::{:?}", token);
     }
+    let ast = parser::parse_expr(&tokens, 0);
+    println!("{:#?}", ast);
     Ok(())
 }
 

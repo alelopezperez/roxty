@@ -1,16 +1,1 @@
-class Breakfast {
-  cook() {
-    print "Eggs a-fryin'!";
-  }
-
-  serve(who) {
-    print "Enjoy your breakfast, " + who + ".";
-  }
-}
-
-// Store it in variables.
-var someVariable = Breakfast; // <- no 
-
-//someVariable.cook();
-
-someVariable().cook();
+1+3;
