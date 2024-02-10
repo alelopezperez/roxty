@@ -4,7 +4,7 @@ use itertools::{peek_nth, PeekNth};
 
 use crate::{
     ast::{self, Expr, LoxVal},
-    token::{Object, Token, TokenType},
+    token::{self, Object, Token, TokenType},
 };
 
 trait Prod {
@@ -159,11 +159,55 @@ fn primary(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
     }
 }
 
-fn consume(tipo: TokenType, message: String, tokens: &Vec<Token>, pos: &mut usize) -> TokenType {
+fn consume(
+    tipo: TokenType,
+    message: String,
+    tokens: &Vec<Token>,
+    pos: &mut usize,
+) -> Result<TokenType, String> {
     if tipo == tokens[*pos].token_type {
         *pos += 1;
-        tipo
+        Ok(tipo)
     } else {
-        panic!("{message}");
+        error(tokens, pos, message)
+    }
+}
+
+fn error(tokens: &Vec<Token>, pos: &mut usize, message: String) -> Result<TokenType, String> {
+    if tokens[*pos + 1].token_type == TokenType::EOF {
+        Err(format!("{} at end {}", tokens[*pos + 1].line, message).to_string())
+    } else {
+        Err(format!(
+            "{} at  {} {}",
+            tokens[*pos + 1].line,
+            tokens[*pos + 1].lexeme,
+            message
+        )
+        .to_string())
+    }
+}
+
+fn synchronize(tokens: &Vec<Token>, pos: &mut usize) {
+    *pos += 1;
+
+    while *pos != tokens.len() - 1 {
+        if tokens[*pos - 1].token_type == TokenType::SEMICOLON {
+            return;
+        }
+
+        match tokens[*pos].token_type {
+            TokenType::CLASS => {}
+            TokenType::FUN => {}
+            TokenType::VAR => {}
+            TokenType::FOR => {}
+            TokenType::IF => {}
+            TokenType::WHILE => {}
+            TokenType::PRINT => {}
+            TokenType::RETURN => {
+                return;
+            }
+            _ => {}
+        }
+        *pos += 1;
     }
 }
