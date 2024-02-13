@@ -4,9 +4,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod token;
-use ast::{Expr, LoxVal};
 use scanner::Scanner;
-use token::Token;
 
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;

@@ -1,10 +1,8 @@
-use std::{fmt::Debug, iter::Peekable};
-
-use itertools::{peek_nth, PeekNth};
+use std::fmt::Debug;
 
 use crate::{
-    ast::{self, Expr, LoxVal},
-    token::{self, Object, Token, TokenType},
+    ast::{self, Expr},
+    token::{Object, Token, TokenType},
 };
 
 trait Prod {
