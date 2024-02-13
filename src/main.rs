@@ -113,6 +113,11 @@ fn run(source: &str) -> Result<(), (usize, String)> {
     }
     let ast = parser::parse_expr(&tokens, 0);
     println!("{:#?}", ast);
+
+    // Let's interpret
+
+    let val = ast.interpret();
+    println!("{:?}", val);
     Ok(())
 }
 
