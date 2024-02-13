@@ -90,7 +90,6 @@ fn factor(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
             }
             _ => {
                 break;
-                // println!("{:?}", tokens[*pos]);
             }
         }
     }
@@ -127,8 +126,6 @@ fn primary(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
         TokenType::NUMBER => {
             *pos += 1;
             if let Object::Number(num) = tokens[*pos - 1].literal {
-                println!("LEGAmos");
-
                 ast::Expr::Literal(ast::LoxVal::Number(num))
             } else {
                 panic!("what");

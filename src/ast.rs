@@ -1,6 +1,4 @@
-use std::ops::Neg;
-
-use crate::token::{self, Token, TokenType};
+use crate::token::{Token, TokenType};
 
 #[derive(Debug, Clone)]
 pub enum Expr {
@@ -22,77 +20,73 @@ impl Expr {
     pub fn interpret(&self) -> LoxVal {
         match self {
             Expr::Literal(val) => val.clone(),
-            Expr::Unary(pro, b_expr) => match pro.token_type {
-                TokenType::BANG => match b_expr.as_ref() {
-                    Expr::Literal(val) => {
-                        if let LoxVal::Boolean(bol) = val {
-                            return LoxVal::Boolean(!bol);
+            Expr::Unary(pro, b_expr) => {
+                let b_exp = b_expr.interpret();
+
+                match pro.token_type {
+                    TokenType::MINUS => match b_exp {
+                        LoxVal::Number(num) => LoxVal::Number(-num),
+                        LoxVal::String(to_num) => {
+                            let to_num = to_num.parse::<f64>();
+                            match to_num {
+                                Ok(val) => LoxVal::Number(-val),
+                                Err(_error) => panic!("ParseErrorFloat"),
+                            }
                         }
-                        panic!("a")
-                    }
-                    _ => {
-                        panic!("as")
-                    }
-                },
-                TokenType::MINUS => match b_expr.as_ref() {
-                    Expr::Literal(val) => {
-                        if let LoxVal::Number(num) = val {
-                            return LoxVal::Number(num.neg());
+                        _ => {
+                            panic!("error");
                         }
-                        panic!("a")
-                    }
+                    },
+                    TokenType::BANG => LoxVal::Boolean(!(is_truthy(b_exp))),
                     _ => {
-                        panic!("as")
+                        panic!("MORE")
                     }
-                },
-                _ => {
-                    panic!("NOt")
                 }
-            },
+            }
+
+            Expr::Grouping(group) => group.interpret(),
 
             Expr::Binary(exp_left, tok, exp_right) => {
                 let left = exp_left.interpret();
                 let right = exp_right.interpret();
 
                 match tok.token_type {
-                    TokenType::EQUAL_EQUAL => match (left, right) {
-                        (LoxVal::Boolean(left_bool), LoxVal::Boolean(right_bool)) => {
-                            LoxVal::Boolean(left_bool == right_bool)
+                    TokenType::EQUAL_EQUAL => LoxVal::Boolean(is_equally(left, right)),
+                    TokenType::BANG_EQUAL => LoxVal::Boolean(!(is_equally(left, right))),
+                    TokenType::LESS => match (left, right) {
+                        (LoxVal::Number(left_num), LoxVal::Number(right_num)) => {
+                            LoxVal::Boolean(left_num < right_num)
                         }
-                        (LoxVal::Number(left_f), LoxVal::Number(right_f)) => {
-                            LoxVal::Boolean(left_f == right_f)
-                        }
-                        (LoxVal::String(left_s), LoxVal::String(right_s)) => {
-                            LoxVal::Boolean(left_s == right_s)
-                        }
-
-                        _ => {
-                            panic!("TYPE ERROR");
-                        }
+                        _ => panic!("LESS ERROR"),
                     },
-                    TokenType::BANG_EQUAL => match (left, right) {
-                        (LoxVal::Boolean(left_bool), LoxVal::Boolean(right_bool)) => {
-                            LoxVal::Boolean(left_bool != right_bool)
+                    TokenType::LESS_EQUAL => match (left, right) {
+                        (LoxVal::Number(left_num), LoxVal::Number(right_num)) => {
+                            LoxVal::Boolean(left_num <= right_num)
                         }
-                        (LoxVal::Number(left_f), LoxVal::Number(right_f)) => {
-                            LoxVal::Boolean(left_f != right_f)
-                        }
-                        (LoxVal::String(left_s), LoxVal::String(right_s)) => {
-                            LoxVal::Boolean(left_s != right_s)
-                        }
-
-                        _ => {
-                            panic!("TYPE ERROR");
-                        }
+                        _ => panic!("LESS EQUAL ERROR"),
                     },
-                    // TokenType::LESS => {}
-                    // TokenType::LESS_EQUAL => {}
-                    // TokenType::GREATER => {}
-                    // TokenType::GREATER_EQUAL => {}
+                    TokenType::GREATER => match (left, right) {
+                        (LoxVal::Number(left_num), LoxVal::Number(right_num)) => {
+                            LoxVal::Boolean(left_num > right_num)
+                        }
+                        _ => panic!("Greater ERROR"),
+                    },
+                    TokenType::GREATER_EQUAL => match (left, right) {
+                        (LoxVal::Number(left_num), LoxVal::Number(right_num)) => {
+                            LoxVal::Boolean(left_num >= right_num)
+                        }
+                        _ => panic!("Greater EQUAL ERROR"),
+                    },
                     TokenType::PLUS => {
                         if let LoxVal::Number(left_f) = left {
                             if let LoxVal::Number(right_f) = right {
                                 return LoxVal::Number(left_f + right_f);
+                            }
+                        }
+
+                        if let LoxVal::String(left_s) = left {
+                            if let LoxVal::String(right_s) = right {
+                                return LoxVal::String(left_s + right_s.as_str());
                             }
                         }
                         panic!("ANOTHEr type");
@@ -126,11 +120,24 @@ impl Expr {
                     }
                 }
             }
-
-            _ => {
-                panic!("NOt")
-            }
         }
     }
 }
-pub enum Operator {}
+
+fn is_truthy(val: LoxVal) -> bool {
+    match val {
+        LoxVal::Nil => true,
+        LoxVal::Boolean(booly) => booly,
+        _ => true,
+    }
+}
+
+fn is_equally(left: LoxVal, right: LoxVal) -> bool {
+    match (left, right) {
+        (LoxVal::Nil, LoxVal::Nil) => true,
+        (LoxVal::Nil, _) => false,
+        (LoxVal::Number(left_n), LoxVal::Number(right_n)) => left_n == right_n,
+        (LoxVal::String(left_n), LoxVal::String(right_n)) => left_n == right_n,
+        (_, _) => false,
+    }
+}

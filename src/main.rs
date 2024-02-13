@@ -20,29 +20,6 @@ impl fmt::Display for ArgsQuantityError {
 fn main() -> Result<(), ArgsQuantityError> {
     let args: Vec<String> = env::args().collect();
 
-    let to_print = ast::Expr::Binary(
-        Box::new(ast::Expr::Unary(
-            Token::new(
-                token::TokenType::MINUS,
-                "-".to_string(),
-                token::Object::Null,
-                1,
-            ),
-            Box::new(Expr::Literal(LoxVal::Number(20.0))),
-        )),
-        Token::new(
-            token::TokenType::STAR,
-            "*".to_string(),
-            token::Object::Null,
-            1,
-        ),
-        Box::new(ast::Expr::Grouping(Box::new(Expr::Literal(
-            ast::LoxVal::Number(123.2),
-        )))),
-    );
-
-    println!("{:?}", to_print);
-
     match args.len() {
         2 => {
             println!("run File {:?}", args);
@@ -101,20 +78,10 @@ fn run_prompt() {
 
 fn run(source: &str) -> Result<(), (usize, String)> {
     let mut scanner = Scanner::new(source);
-    println!("PRINT SOURCE {}", source);
-
-    println!("\n\n\n aqui empiez");
 
     let tokens = scanner.scan_tokens()?;
 
-    println!("\n\n\n aqui termino de escanear");
-    for token in tokens.iter() {
-        println!("TOKTOK::{:?}", token);
-    }
     let ast = parser::parse_expr(&tokens, 0);
-    println!("{:#?}", ast);
-
-    // Let's interpret
 
     let val = ast.interpret();
     println!("{:?}", val);
