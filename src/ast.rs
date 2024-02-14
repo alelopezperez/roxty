@@ -1,4 +1,6 @@
-use crate::token::{Token, TokenType};
+use core::num;
+
+use crate::token::{self, Token, TokenType};
 
 #[derive(Debug, Clone)]
 pub enum Expr {
@@ -8,12 +10,35 @@ pub enum Expr {
     Grouping(Box<Expr>),
 }
 
+pub enum Stmt {
+    ExprStmt(Expr),
+    PrintStmt(Expr),
+}
+
 #[derive(Debug, Clone)]
 pub enum LoxVal {
     String(String),
     Number(f64),
     Boolean(bool),
     Nil,
+}
+impl Stmt {
+    pub fn eval(&self) {
+        match self {
+            Stmt::PrintStmt(expr) => {
+                let val = expr.interpret();
+                match val {
+                    LoxVal::Boolean(bol) => println!("{bol}"),
+                    LoxVal::Number(num) => println!("{num}"),
+                    LoxVal::String(word) => println!("{word}"),
+                    LoxVal::Nil => println!("Nil"),
+                }
+            }
+            _ => {
+                panic!("Not Implemented")
+            }
+        }
+    }
 }
 
 impl Expr {

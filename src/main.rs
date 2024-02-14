@@ -4,6 +4,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod token;
+use parser::parse;
 use scanner::Scanner;
 
 #[derive(Debug, Clone)]
@@ -79,10 +80,13 @@ fn run(source: &str) -> Result<(), (usize, String)> {
 
     let tokens = scanner.scan_tokens()?;
 
-    let ast = parser::parse_expr(&tokens, 0);
+    let all_ast = parse(tokens, 0);
 
-    let val = ast.interpret();
-    println!("{:?}", val);
+    // let val = ast.interpret();
+    // println!("{:?}", val);
+    for stmt in all_ast.iter() {
+        stmt.eval();
+    }
     Ok(())
 }
 

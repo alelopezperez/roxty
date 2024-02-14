@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use crate::{
-    ast::{self, Expr},
+    ast::{self, Expr, Stmt},
     token::{Object, Token, TokenType},
 };
 
@@ -9,17 +9,85 @@ trait Prod {
     type Input: Debug;
 }
 
-pub fn parse_expr(tokens: &Vec<Token>, mut pos: usize) -> Expr {
-    expression(tokens, &mut pos)
+pub fn parse(tokens: Vec<Token>, mut pos: usize) -> Vec<Stmt> {
+    let mut stmt = Vec::new();
+
+    while pos < tokens.len() {
+        if let Some(stm) = statements(&tokens, &mut pos) {
+            stmt.push(stm);
+        }
+    }
+
+    stmt
 }
 
-fn expression(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
+fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
+    if let TokenType::PRINT = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(print_stmt(tokens, pos));
+    }
+
+    expr_stmt(tokens, pos)
+}
+fn print_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    let val = parse_expr(tokens, pos);
+
+    match consume(
+        TokenType::SEMICOLON,
+        "Expected ';' after value".to_string(),
+        tokens,
+        pos,
+    ) {
+        Ok(_) => {}
+        Err(_) => {
+            panic!("print stmt hey");
+        }
+    }
+    println!("salimo?");
+
+    if val.is_none() {
+        panic!("ERROR");
+    }
+    Stmt::PrintStmt(val.unwrap())
+}
+
+fn expr_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
+    let expr = parse_expr(tokens, pos);
+    println!("fue aqu?");
+    if expr.is_none() {
+        println!("oye");
+        *pos += 1;
+        return None;
+    }
+    match consume(
+        TokenType::SEMICOLON,
+        "Expected ';' after value".to_string(),
+        tokens,
+        pos,
+    ) {
+        Ok(_) => {}
+        Err(_) => {
+            panic!("exprr stmt hey");
+        }
+    }
+
+    Some(Stmt::ExprStmt(expr.unwrap()))
+}
+
+fn parse_expr(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
+    expression(tokens, pos)
+}
+
+fn expression(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
     equality(tokens, pos)
 }
-fn equality(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
+fn equality(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
+    if tokens[*pos].token_type == TokenType::EOF {
+        return None;
+    }
     let mut expr = comparison(tokens, pos);
 
-    while *pos < tokens.len() {
+    while *pos < tokens.len() && tokens[*pos].token_type != TokenType::EOF {
         match tokens[*pos].token_type {
             TokenType::BANG_EQUAL | TokenType::EQUAL_EQUAL => {
                 *pos += 1;
@@ -32,13 +100,13 @@ fn equality(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
             }
         }
     }
-    expr
+    Some(expr)
 }
 
 fn comparison(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
     let mut expr = term(tokens, pos);
 
-    while *pos < tokens.len() {
+    while *pos < tokens.len() && tokens[*pos].token_type != TokenType::EOF {
         match tokens[*pos].token_type {
             TokenType::GREATER
             | TokenType::GREATER_EQUAL
@@ -60,7 +128,7 @@ fn comparison(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
 fn term(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
     let mut expr = factor(tokens, pos);
 
-    while *pos < tokens.len() {
+    while *pos < tokens.len() && tokens[*pos].token_type != TokenType::EOF {
         match tokens[*pos].token_type {
             TokenType::MINUS | TokenType::PLUS => {
                 *pos += 1;
@@ -78,7 +146,7 @@ fn term(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
 fn factor(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
     let mut expr = unary(tokens, pos);
 
-    while *pos < tokens.len() {
+    while *pos < tokens.len() && tokens[*pos].token_type != TokenType::EOF {
         match tokens[*pos].token_type {
             TokenType::SLASH | TokenType::STAR => {
                 *pos += 1;
@@ -140,17 +208,23 @@ fn primary(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
 
         TokenType::LEFT_PAREN => {
             *pos += 1;
-            let expr = expression(tokens, pos);
-            consume(
+            let expr = expression(tokens, pos).unwrap();
+            match consume(
                 TokenType::RIGHT_PAREN,
                 "Expected ')' after expresion".to_string(),
                 tokens,
                 pos,
-            );
+            ) {
+                Ok(_) => {}
+                Err(_) => panic!("print right param"),
+            }
             ast::Expr::Grouping(Box::new(expr))
         }
 
-        _ => panic!("why"),
+        _ => {
+            println!("{:?}", tokens[*pos]);
+            panic!("why")
+        }
     }
 }
 
@@ -164,19 +238,18 @@ fn consume(
         *pos += 1;
         Ok(tipo)
     } else {
+        println!("NOES SEMICOLON {:?}", tokens[*pos]);
         error(tokens, pos, message)
     }
 }
 
 fn error(tokens: &Vec<Token>, pos: &mut usize, message: String) -> Result<TokenType, String> {
-    if tokens[*pos + 1].token_type == TokenType::EOF {
-        Err(format!("{} at end {}", tokens[*pos + 1].line, message).to_string())
+    if tokens[*pos].token_type == TokenType::EOF {
+        Err(format!("{} at end {}", tokens[*pos].line, message).to_string())
     } else {
         Err(format!(
             "{} at  {} {}",
-            tokens[*pos + 1].line,
-            tokens[*pos + 1].lexeme,
-            message
+            tokens[*pos].line, tokens[*pos].lexeme, message
         )
         .to_string())
     }
