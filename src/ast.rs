@@ -1,4 +1,5 @@
 use core::num;
+use std::collections::HashMap;
 
 use crate::token::{self, Token, TokenType};
 
@@ -8,11 +9,13 @@ pub enum Expr {
     Unary(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
+    Variable(Token),
 }
 
 pub enum Stmt {
     ExprStmt(Expr),
     PrintStmt(Expr),
+    VarDecl(Token, Option<Expr>),
 }
 
 #[derive(Debug, Clone)]
@@ -23,16 +26,34 @@ pub enum LoxVal {
     Nil,
 }
 impl Stmt {
-    pub fn eval(&self) {
+    pub fn eval(&self, enviroments: &mut HashMap<String, LoxVal>) -> LoxVal {
         match self {
             Stmt::PrintStmt(expr) => {
-                let val = expr.interpret();
+                let val = expr.interpret(enviroments);
                 match val {
                     LoxVal::Boolean(bol) => println!("{bol}"),
                     LoxVal::Number(num) => println!("{num}"),
                     LoxVal::String(word) => println!("{word}"),
                     LoxVal::Nil => println!("Nil"),
                 }
+                LoxVal::Nil
+            }
+            Stmt::ExprStmt(expr) => {
+                expr.interpret(enviroments);
+                LoxVal::Nil
+            }
+            Stmt::VarDecl(name, init) => {
+                let val = match init {
+                    Some(exp) => exp.interpret(enviroments),
+                    None => LoxVal::Nil,
+                };
+
+                println!("{:?} {:?}", name.lexeme, val);
+
+                enviroments.insert(name.lexeme.clone(), val);
+                println!("{}", enviroments.len());
+
+                LoxVal::Nil
             }
             _ => {
                 panic!("Not Implemented")
@@ -42,11 +63,11 @@ impl Stmt {
 }
 
 impl Expr {
-    pub fn interpret(&self) -> LoxVal {
+    pub fn interpret(&self, enviroments: &mut HashMap<String, LoxVal>) -> LoxVal {
         match self {
             Expr::Literal(val) => val.clone(),
             Expr::Unary(pro, b_expr) => {
-                let b_exp = b_expr.interpret();
+                let b_exp = b_expr.interpret(enviroments);
 
                 match pro.token_type {
                     TokenType::MINUS => match b_exp {
@@ -69,11 +90,11 @@ impl Expr {
                 }
             }
 
-            Expr::Grouping(group) => group.interpret(),
+            Expr::Grouping(group) => group.interpret(enviroments),
 
             Expr::Binary(exp_left, tok, exp_right) => {
-                let left = exp_left.interpret();
-                let right = exp_right.interpret();
+                let left = exp_left.interpret(enviroments);
+                let right = exp_right.interpret(enviroments);
 
                 match tok.token_type {
                     TokenType::EQUAL_EQUAL => LoxVal::Boolean(is_equally(left, right)),
@@ -144,6 +165,10 @@ impl Expr {
                         panic!("NO OPERATOR")
                     }
                 }
+            }
+            Expr::Variable(var) => {
+                println!("{:?},{}", var, enviroments.len());
+                enviroments.get(&var.lexeme).unwrap().clone()
             }
         }
     }

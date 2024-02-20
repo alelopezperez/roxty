@@ -13,12 +13,49 @@ pub fn parse(tokens: Vec<Token>, mut pos: usize) -> Vec<Stmt> {
     let mut stmt = Vec::new();
 
     while pos < tokens.len() {
-        if let Some(stm) = statements(&tokens, &mut pos) {
+        if let Some(stm) = declaration(&tokens, &mut pos) {
             stmt.push(stm);
         }
     }
 
     stmt
+}
+
+fn declaration(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
+    if let TokenType::VAR = tokens[*pos].token_type {
+        *pos += 1;
+        return var_declaraton(tokens, pos);
+    }
+
+    return statements(tokens, pos);
+}
+
+fn var_declaraton(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
+    let mut name = tokens[*pos].clone();
+    match consume(
+        TokenType::IDENTIFIER,
+        "Expect variable name.".to_string(),
+        tokens,
+        pos,
+    ) {
+        Ok(n) => name = n,
+        Err(_) => synchronize(tokens, pos),
+    };
+
+    let mut initializer = None;
+
+    if TokenType::EQUAL == tokens[*pos].token_type {
+        *pos += 1;
+        initializer = Some(expression(tokens, pos).unwrap());
+    }
+    consume(
+        TokenType::SEMICOLON,
+        "Expect ';' after variable declaration.".to_string(),
+        tokens,
+        pos,
+    );
+
+    Some(Stmt::VarDecl(name, initializer))
 }
 
 fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
@@ -43,7 +80,6 @@ fn print_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
             panic!("print stmt hey");
         }
     }
-    println!("salimo?");
 
     if val.is_none() {
         panic!("ERROR");
@@ -53,9 +89,7 @@ fn print_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
 
 fn expr_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
     let expr = parse_expr(tokens, pos);
-    println!("fue aqu?");
     if expr.is_none() {
-        println!("oye");
         *pos += 1;
         return None;
     }
@@ -221,6 +255,11 @@ fn primary(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
             ast::Expr::Grouping(Box::new(expr))
         }
 
+        TokenType::IDENTIFIER => {
+            *pos += 1;
+            ast::Expr::Variable(tokens[*pos - 1].clone())
+        }
+
         _ => {
             println!("{:?}", tokens[*pos]);
             panic!("why")
@@ -233,17 +272,17 @@ fn consume(
     message: String,
     tokens: &Vec<Token>,
     pos: &mut usize,
-) -> Result<TokenType, String> {
+) -> Result<Token, String> {
     if tipo == tokens[*pos].token_type {
         *pos += 1;
-        Ok(tipo)
+        Ok(tokens[*pos - 1].clone())
     } else {
         println!("NOES SEMICOLON {:?}", tokens[*pos]);
         error(tokens, pos, message)
     }
 }
 
-fn error(tokens: &Vec<Token>, pos: &mut usize, message: String) -> Result<TokenType, String> {
+fn error(tokens: &Vec<Token>, pos: &mut usize, message: String) -> Result<Token, String> {
     if tokens[*pos].token_type == TokenType::EOF {
         Err(format!("{} at end {}", tokens[*pos].line, message).to_string())
     } else {

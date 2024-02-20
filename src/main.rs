@@ -1,9 +1,10 @@
-use std::{env, fmt, io::Write};
+use std::{collections::HashMap, env, fmt, io::Write};
 mod ast;
 mod interpreter;
 mod parser;
 mod scanner;
 mod token;
+use ast::LoxVal;
 use parser::parse;
 use scanner::Scanner;
 
@@ -38,8 +39,10 @@ fn main() -> Result<(), ArgsQuantityError> {
 }
 
 fn run_file(path: &str) -> Result<(), (usize, String)> {
+    let mut enviroments: HashMap<String, LoxVal> = HashMap::new();
+
     match std::fs::read_to_string(path) {
-        Ok(file) => match run(&file) {
+        Ok(file) => match run(&file, &mut enviroments) {
             Ok(_) => {
                 println!("dentro de ok");
                 Ok(())
@@ -55,6 +58,8 @@ fn run_file(path: &str) -> Result<(), (usize, String)> {
     }
 }
 fn run_prompt() {
+    let mut enviroments: HashMap<String, LoxVal> = HashMap::new();
+
     loop {
         let mut line = String::new();
         print!("> ");
@@ -68,14 +73,14 @@ fn run_prompt() {
             break;
         }
 
-        match run(&line) {
+        match run(&line, &mut enviroments) {
             Ok(_) => {}
             Err(err) => error(err.0, err.1),
         }
     }
 }
 
-fn run(source: &str) -> Result<(), (usize, String)> {
+fn run(source: &str, enviroments: &mut HashMap<String, LoxVal>) -> Result<(), (usize, String)> {
     let mut scanner = Scanner::new(source);
 
     let tokens = scanner.scan_tokens()?;
@@ -85,7 +90,7 @@ fn run(source: &str) -> Result<(), (usize, String)> {
     // let val = ast.interpret();
     // println!("{:?}", val);
     for stmt in all_ast.iter() {
-        stmt.eval();
+        stmt.eval(enviroments);
     }
     Ok(())
 }
