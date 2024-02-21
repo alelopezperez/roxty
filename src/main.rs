@@ -11,6 +11,42 @@ use scanner::Scanner;
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;
 
+struct Enviroments {
+    enclosing: Option<Box<Enviroments>>,
+    map: HashMap<String, LoxVal>,
+}
+impl Enviroments {
+    fn get(&self, id: &str) -> LoxVal {
+        if self.map.contains_key(id) {
+            return self.map.get(id).unwrap().clone();
+        }
+
+        match &self.enclosing {
+            Some(enc) => enc.get(id),
+            None => {
+                panic!("HEY NO VARI IN ENVIROMENT")
+            }
+        }
+    }
+    fn define(&mut self, key: String, value: LoxVal) {
+        self.map.insert(key, value);
+    }
+
+    fn assign(&mut self, key: String, value: LoxVal) {
+        if self.map.contains_key(&key) {
+            self.map.insert(key, value);
+            return;
+        }
+
+        match &mut self.enclosing {
+            Some(enc) => enc.assign(key, value),
+            None => {
+                panic!("HEY NO VARI IN ENVIROMENT")
+            }
+        }
+    }
+}
+
 impl fmt::Display for ArgsQuantityError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "invalid first item to double")

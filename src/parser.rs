@@ -113,7 +113,24 @@ fn parse_expr(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
 }
 
 fn expression(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
-    equality(tokens, pos)
+    assignment(tokens, pos)
+}
+
+fn assignment(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
+    let expr = equality(tokens, pos);
+
+    if let TokenType::EQUAL = tokens[*pos].token_type {
+        *pos += 1;
+        let equals = tokens[*pos - 1].clone();
+        let value = assignment(tokens, pos);
+
+        if let Expr::Variable(name) = expr.clone().unwrap() {
+            return Some(Expr::Assign(name, Box::new(value.unwrap())));
+        }
+        error(tokens, pos, "Invalid assignment target.".to_string());
+    }
+
+    return expr;
 }
 fn equality(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
     if tokens[*pos].token_type == TokenType::EOF {

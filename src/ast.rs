@@ -10,6 +10,7 @@ pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
     Variable(Token),
+    Assign(Token, Box<Expr>),
 }
 
 pub enum Stmt {
@@ -88,6 +89,13 @@ impl Expr {
                         panic!("MORE")
                     }
                 }
+            }
+
+            Expr::Assign(name, expr) => {
+                let value = expr.interpret(enviroments);
+
+                enviroments.insert(name.lexeme.clone(), value.clone());
+                value
             }
 
             Expr::Grouping(group) => group.interpret(enviroments),
