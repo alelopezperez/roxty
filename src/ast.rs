@@ -21,6 +21,7 @@ pub enum Stmt {
     PrintStmt(Expr),
     VarDecl(Token, Option<Expr>),
     Block(Vec<Stmt>),
+    IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
@@ -33,6 +34,19 @@ pub enum LoxVal {
 impl Stmt {
     pub fn eval(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
+            Stmt::IfStmt(cond, then, else_stmt) => {
+                if is_truthy(cond.interpret(enviroments)) {
+                    then.eval(enviroments);
+                }
+                match else_stmt {
+                    Some(else_b) => {
+                        else_b.eval(enviroments);
+                    }
+                    None => {}
+                }
+
+                LoxVal::Nil
+            }
             Stmt::PrintStmt(expr) => {
                 let val = expr.interpret(enviroments);
                 match val {

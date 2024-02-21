@@ -17,3 +17,10 @@ var c = "global c";
 print a;
 print b;
 print c;
+
+if (false) {
+	print "hola";
+}
+else {
+	print "false";
+}

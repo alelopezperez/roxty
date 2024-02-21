@@ -69,7 +69,39 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(block_stmt(tokens, pos));
     }
 
+    if let TokenType::IF = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(if_stmt(tokens, pos));
+    }
+
     expr_stmt(tokens, pos)
+}
+
+fn if_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    consume(
+        TokenType::LEFT_PAREN,
+        "Expect '(' after 'if'.".to_string(),
+        tokens,
+        pos,
+    );
+    let condition = expression(tokens, pos).unwrap();
+    consume(
+        TokenType::RIGHT_PAREN,
+        "Expect '(' after 'if'.".to_string(),
+        tokens,
+        pos,
+    );
+
+    let then_branch = statements(tokens, pos).unwrap();
+
+    let mut else_branch: Option<Box<Stmt>> = None;
+
+    if let TokenType::ELSE = tokens[*pos].token_type {
+        *pos += 1;
+        else_branch = Some(Box::new(statements(tokens, pos).unwrap()));
+    }
+
+    return Stmt::IfStmt(condition, Box::new(then_branch), else_branch);
 }
 
 fn block_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
