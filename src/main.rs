@@ -11,6 +11,7 @@ use scanner::Scanner;
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;
 
+#[derive(Clone)]
 struct Enviroments {
     enclosing: Option<Box<Enviroments>>,
     map: HashMap<String, LoxVal>,
@@ -76,9 +77,13 @@ fn main() -> Result<(), ArgsQuantityError> {
 
 fn run_file(path: &str) -> Result<(), (usize, String)> {
     let mut enviroments: HashMap<String, LoxVal> = HashMap::new();
+    let mut env = Enviroments {
+        enclosing: None,
+        map: enviroments.clone(),
+    };
 
     match std::fs::read_to_string(path) {
-        Ok(file) => match run(&file, &mut enviroments) {
+        Ok(file) => match run(&file, &mut env) {
             Ok(_) => {
                 println!("dentro de ok");
                 Ok(())
@@ -96,6 +101,11 @@ fn run_file(path: &str) -> Result<(), (usize, String)> {
 fn run_prompt() {
     let mut enviroments: HashMap<String, LoxVal> = HashMap::new();
 
+    let mut env = Enviroments {
+        enclosing: None,
+        map: enviroments.clone(),
+    };
+
     loop {
         let mut line = String::new();
         print!("> ");
@@ -109,14 +119,14 @@ fn run_prompt() {
             break;
         }
 
-        match run(&line, &mut enviroments) {
+        match run(&line, &mut env) {
             Ok(_) => {}
             Err(err) => error(err.0, err.1),
         }
     }
 }
 
-fn run(source: &str, enviroments: &mut HashMap<String, LoxVal>) -> Result<(), (usize, String)> {
+fn run(source: &str, enviroments: &mut Enviroments) -> Result<(), (usize, String)> {
     let mut scanner = Scanner::new(source);
 
     let tokens = scanner.scan_tokens()?;

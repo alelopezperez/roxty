@@ -1,7 +1,10 @@
 use core::num;
 use std::collections::HashMap;
 
-use crate::token::{self, Token, TokenType};
+use crate::{
+    token::{self, Token, TokenType},
+    Enviroments,
+};
 
 #[derive(Debug, Clone)]
 pub enum Expr {
@@ -17,6 +20,7 @@ pub enum Stmt {
     ExprStmt(Expr),
     PrintStmt(Expr),
     VarDecl(Token, Option<Expr>),
+    Block(Vec<Stmt>),
 }
 
 #[derive(Debug, Clone)]
@@ -27,7 +31,7 @@ pub enum LoxVal {
     Nil,
 }
 impl Stmt {
-    pub fn eval(&self, enviroments: &mut HashMap<String, LoxVal>) -> LoxVal {
+    pub fn eval(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
             Stmt::PrintStmt(expr) => {
                 let val = expr.interpret(enviroments);
@@ -51,20 +55,28 @@ impl Stmt {
 
                 println!("{:?} {:?}", name.lexeme, val);
 
-                enviroments.insert(name.lexeme.clone(), val);
-                println!("{}", enviroments.len());
+                enviroments.define(name.lexeme.clone(), val);
 
                 LoxVal::Nil
             }
-            _ => {
-                panic!("Not Implemented")
+            Stmt::Block(block) => {
+                let mut new_env = Enviroments {
+                    enclosing: Some(Box::new(enviroments.clone())),
+                    map: HashMap::new(),
+                };
+
+                for blk in block {
+                    blk.eval(&mut new_env);
+                }
+
+                LoxVal::Nil
             }
         }
     }
 }
 
 impl Expr {
-    pub fn interpret(&self, enviroments: &mut HashMap<String, LoxVal>) -> LoxVal {
+    pub fn interpret(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
             Expr::Literal(val) => val.clone(),
             Expr::Unary(pro, b_expr) => {
@@ -94,7 +106,7 @@ impl Expr {
             Expr::Assign(name, expr) => {
                 let value = expr.interpret(enviroments);
 
-                enviroments.insert(name.lexeme.clone(), value.clone());
+                enviroments.assign(name.lexeme.clone(), value.clone());
                 value
             }
 
@@ -174,10 +186,7 @@ impl Expr {
                     }
                 }
             }
-            Expr::Variable(var) => {
-                println!("{:?},{}", var, enviroments.len());
-                enviroments.get(&var.lexeme).unwrap().clone()
-            }
+            Expr::Variable(var) => enviroments.get(&var.lexeme).clone(),
         }
     }
 }

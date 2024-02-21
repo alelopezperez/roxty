@@ -64,7 +64,32 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(print_stmt(tokens, pos));
     }
 
+    if let TokenType::LEFT_BRACE = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(block_stmt(tokens, pos));
+    }
+
     expr_stmt(tokens, pos)
+}
+
+fn block_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    let mut block = Vec::new();
+    while *pos < tokens.len()
+        && tokens[*pos].token_type != TokenType::EOF
+        && tokens[*pos].token_type != TokenType::RIGHT_BRACE
+    {
+        match declaration(tokens, pos) {
+            Some(decl) => block.push(decl),
+            None => {}
+        }
+    }
+    consume(
+        TokenType::RIGHT_BRACE,
+        "Expect '}' after block.".to_string(),
+        tokens,
+        pos,
+    );
+    Stmt::Block(block)
 }
 fn print_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
     let val = parse_expr(tokens, pos);
