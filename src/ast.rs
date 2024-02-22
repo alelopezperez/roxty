@@ -41,7 +41,6 @@ impl Stmt {
                     match body {
                         Some(body) => {
                             body.eval(enviroments);
-                            let a = enviroments.get("a").clone();
                         }
                         None => {}
                     }

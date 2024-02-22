@@ -79,7 +79,75 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(while_stmt(tokens, pos));
     }
 
+    if let TokenType::FOR = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(for_stmt(tokens, pos));
+    }
+
     expr_stmt(tokens, pos)
+}
+
+fn for_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    consume(
+        TokenType::LEFT_PAREN,
+        "Expect '(' after 'for'.".to_string(),
+        tokens,
+        pos,
+    );
+
+    let mut init: Option<Stmt> = None;
+
+    if let TokenType::SEMICOLON = tokens[*pos].token_type {
+        *pos += 1;
+    } else if let TokenType::VAR = tokens[*pos].token_type {
+        *pos += 1;
+        init = var_declaraton(tokens, pos);
+    } else {
+        init = expr_stmt(tokens, pos);
+    }
+
+    let mut condition: Option<Expr> = None;
+
+    if TokenType::SEMICOLON != tokens[*pos].token_type {
+        condition = expression(tokens, pos);
+    }
+
+    consume(
+        TokenType::SEMICOLON,
+        "Expect ';' after 'for'.".to_string(),
+        tokens,
+        pos,
+    );
+
+    let mut increment: Option<Expr> = None;
+
+    if TokenType::RIGHT_PAREN != tokens[*pos].token_type {
+        increment = expression(tokens, pos);
+    }
+
+    consume(
+        TokenType::RIGHT_PAREN,
+        "Expect ';' after 'for'.".to_string(),
+        tokens,
+        pos,
+    );
+
+    let mut body = statements(tokens, pos).unwrap();
+
+    if let Some(inc) = increment {
+        body = Stmt::Block(vec![body, Stmt::ExprStmt(inc)])
+    }
+
+    if let None = condition {
+        condition = Some(Expr::Literal(ast::LoxVal::Boolean(true)));
+    }
+    body = Stmt::WhileStmt(condition.unwrap(), Some(Box::new(body)));
+
+    if let Some(initi) = init {
+        body = Stmt::Block(vec![initi, body]);
+    }
+
+    return body;
 }
 
 fn while_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
