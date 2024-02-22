@@ -40,8 +40,8 @@ impl Stmt {
                 while is_truthy(condition.interpret(enviroments)) {
                     match body {
                         Some(body) => {
-                            println!("{:?}", body);
                             body.eval(enviroments);
+                            let a = enviroments.get("a").clone();
                         }
                         None => {}
                     }
@@ -97,6 +97,7 @@ impl Stmt {
                 for blk in block {
                     blk.eval(&mut new_env);
                 }
+                *enviroments = new_env.enclosing.unwrap().as_ref().clone();
 
                 LoxVal::Nil
             }
