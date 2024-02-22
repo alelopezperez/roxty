@@ -174,7 +174,7 @@ fn expression(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
 }
 
 fn assignment(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
-    let expr = equality(tokens, pos);
+    let expr = or(tokens, pos);
 
     if let TokenType::EQUAL = tokens[*pos].token_type {
         *pos += 1;
@@ -189,6 +189,43 @@ fn assignment(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
 
     return expr;
 }
+
+fn or(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
+    let mut expr: Option<Expr> = and(tokens, pos);
+
+    while tokens[*pos].token_type == TokenType::OR {
+        *pos += 1;
+        let operator = tokens[*pos - 1].clone();
+        let right = and(tokens, pos);
+        expr = Some(Expr::Logical(
+            Box::new(expr.unwrap()),
+            operator,
+            Box::new(right.unwrap()),
+        ));
+    }
+
+    expr
+}
+
+fn and(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
+    let mut expr = equality(tokens, pos);
+
+    while tokens[*pos].token_type == TokenType::AND {
+        *pos += 1;
+
+        let operator = tokens[*pos - 1].clone();
+        let right = equality(tokens, pos);
+
+        expr = Some(Expr::Logical(
+            Box::new(expr.unwrap()),
+            operator,
+            Box::new(right.unwrap()),
+        ));
+    }
+
+    expr
+}
+
 fn equality(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
     if tokens[*pos].token_type == TokenType::EOF {
         return None;

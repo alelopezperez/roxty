@@ -14,6 +14,7 @@ pub enum Expr {
     Grouping(Box<Expr>),
     Variable(Token),
     Assign(Token, Box<Expr>),
+    Logical(Box<Expr>, Token, Box<Expr>),
 }
 
 pub enum Stmt {
@@ -116,6 +117,19 @@ impl Expr {
                     }
                 }
             }
+            Expr::Logical(left, opr, right) => {
+                let left = left.interpret(enviroments);
+
+                if let TokenType::OR = opr.token_type {
+                    if is_truthy(left.clone()) {
+                        return left.clone();
+                    }
+                } else if !is_truthy(left.clone()) {
+                    return left;
+                }
+
+                right.interpret(enviroments)
+            }
 
             Expr::Assign(name, expr) => {
                 let value = expr.interpret(enviroments);
@@ -207,7 +221,7 @@ impl Expr {
 
 fn is_truthy(val: LoxVal) -> bool {
     match val {
-        LoxVal::Nil => true,
+        LoxVal::Nil => false,
         LoxVal::Boolean(booly) => booly,
         _ => true,
     }
