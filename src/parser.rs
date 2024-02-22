@@ -74,7 +74,37 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(if_stmt(tokens, pos));
     }
 
+    if let TokenType::WHILE = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(while_stmt(tokens, pos));
+    }
+
     expr_stmt(tokens, pos)
+}
+
+fn while_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    consume(
+        TokenType::LEFT_PAREN,
+        "Expect '(' after 'while'.".to_string(),
+        tokens,
+        pos,
+    );
+
+    let condition = expression(tokens, pos).unwrap();
+
+    consume(
+        TokenType::RIGHT_PAREN,
+        "Expect '(' after 'if'.".to_string(),
+        tokens,
+        pos,
+    );
+
+    let body = match statements(tokens, pos) {
+        Some(b) => Some(Box::new(b)),
+        None => None,
+    };
+
+    Stmt::WhileStmt(condition, body)
 }
 
 fn if_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {

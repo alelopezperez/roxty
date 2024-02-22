@@ -16,13 +16,14 @@ pub enum Expr {
     Assign(Token, Box<Expr>),
     Logical(Box<Expr>, Token, Box<Expr>),
 }
-
+#[derive(Debug)]
 pub enum Stmt {
     ExprStmt(Expr),
     PrintStmt(Expr),
     VarDecl(Token, Option<Expr>),
     Block(Vec<Stmt>),
     IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
+    WhileStmt(Expr, Option<Box<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
@@ -35,6 +36,19 @@ pub enum LoxVal {
 impl Stmt {
     pub fn eval(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
+            Stmt::WhileStmt(condition, body) => {
+                while is_truthy(condition.interpret(enviroments)) {
+                    match body {
+                        Some(body) => {
+                            println!("{:?}", body);
+                            body.eval(enviroments);
+                        }
+                        None => {}
+                    }
+                }
+
+                LoxVal::Nil
+            }
             Stmt::IfStmt(cond, then, else_stmt) => {
                 if is_truthy(cond.interpret(enviroments)) {
                     then.eval(enviroments);
