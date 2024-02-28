@@ -15,6 +15,7 @@ pub enum Expr {
     Variable(Token),
     Assign(Token, Box<Expr>),
     Logical(Box<Expr>, Token, Box<Expr>),
+    Call(Box<Expr>, Token, Vec<Option<Expr>>),
 }
 #[derive(Debug)]
 pub enum Stmt {
@@ -107,6 +108,9 @@ impl Stmt {
 impl Expr {
     pub fn interpret(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
+            _ => {
+                todo!()
+            }
             Expr::Literal(val) => val.clone(),
             Expr::Unary(pro, b_expr) => {
                 let b_exp = b_expr.interpret(enviroments);

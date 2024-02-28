@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{
     ast::{self, Expr, Stmt},
-    token::{Object, Token, TokenType},
+    token::{self, Object, Token, TokenType},
 };
 
 trait Prod {
@@ -413,10 +413,51 @@ fn unary(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
             let right = unary(tokens, pos);
             ast::Expr::Unary(operator, Box::new(right))
         }
-        _ => primary(tokens, pos),
+        _ => call(tokens, pos),
     }
 }
 
+fn call(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
+    let mut expr = primary(tokens, pos);
+
+    loop {
+        if tokens[*pos].token_type == TokenType::LEFT_PAREN {
+            *pos += 1;
+            expr = finish_call(expr, tokens, pos);
+        } else {
+            break;
+        }
+    }
+
+    expr
+}
+fn finish_call(callee: Expr, tokens: &Vec<Token>, pos: &mut usize) -> Expr {
+    let mut arguments = Vec::new();
+    if tokens[*pos].token_type != TokenType::RIGHT_PAREN {
+        loop {
+            if arguments.len() > 255 {
+                panic!("NO more than 255");
+            }
+            arguments.push(expression(tokens, pos));
+
+            if tokens[*pos].token_type == TokenType::COMMA {
+                *pos += 1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    let paren = consume(
+        TokenType::RIGHT_PAREN,
+        "Expect ')' after arguments.".to_string(),
+        tokens,
+        pos,
+    )
+    .unwrap();
+
+    Expr::Call(Box::new(callee), paren, arguments)
+}
 fn primary(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
     match tokens[*pos].token_type {
         TokenType::FALSE => {
