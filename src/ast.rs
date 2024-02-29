@@ -30,7 +30,7 @@ pub enum Stmt {
     IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
     WhileStmt(Expr, Option<Box<Stmt>>),
     Functions(Token, Vec<Token>, Box<Stmt>),
-    Return(),
+    Return(Option<Expr>),
 }
 
 #[derive(Debug, Clone)]
@@ -38,16 +38,16 @@ pub enum LoxVal {
     String(String),
     Number(f64),
     Boolean(bool),
-    Functions(Box<Stmt>),
+    Functions(Box<Stmt>, Option<Enviroments>),
     Nil,
 }
 
 impl LoxVal {
-    fn call(&self, enviroments: &mut Enviroments, arguments: Vec<LoxVal>) -> LoxVal {
-        if let LoxVal::Functions(fun) = self {
-            if let Stmt::Functions(_name, params, body) = fun.as_ref() {
+    fn call(&mut self, enviroments: &mut Enviroments, arguments: Vec<LoxVal>) -> LoxVal {
+        if let LoxVal::Functions(fun, fun_env) = self {
+            if let Stmt::Functions(name, params, body) = fun.as_ref() {
                 let mut new_env = Enviroments {
-                    enclosing: Some(Box::new(enviroments.clone())),
+                    enclosing: Some(Box::new(fun_env.as_ref().unwrap().clone())),
                     map: HashMap::new(),
                 };
 
@@ -55,11 +55,17 @@ impl LoxVal {
                     new_env.define(param.lexeme.clone(), arguments[i].clone());
                 }
 
-                body.eval(&mut new_env);
-                *enviroments = new_env.enclosing.unwrap().as_ref().clone()
+                let val = body.eval(&mut new_env);
+                if let LoxVal::Nil = val {
+                } else {
+                    *fun_env = Some(new_env.enclosing.unwrap().as_ref().clone());
+
+                    return val;
+                }
+
+                *fun_env = Some(new_env.enclosing.unwrap().as_ref().clone());
             }
         }
-
         LoxVal::Nil
     }
 }
@@ -84,8 +90,12 @@ impl Stmt {
     // }
     pub fn eval(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
-            Stmt::Functions(name, params, body) => {
-                let fun = LoxVal::Functions(Box::new(self.clone()));
+            Stmt::Return(exp) => match exp {
+                Some(expr) => expr.interpret(enviroments),
+                None => LoxVal::Nil,
+            },
+            Stmt::Functions(name, _params, _body) => {
+                let fun = LoxVal::Functions(Box::new(self.clone()), Some(enviroments.clone()));
                 enviroments.define(name.lexeme.clone(), fun);
                 LoxVal::Nil
             }
@@ -103,7 +113,11 @@ impl Stmt {
             }
             Stmt::IfStmt(cond, then, else_stmt) => {
                 if is_truthy(cond.interpret(enviroments)) {
-                    then.eval(enviroments);
+                    let val = then.eval(enviroments);
+                    if let LoxVal::Nil = val {
+                    } else {
+                        return val;
+                    }
                 }
                 match else_stmt {
                     Some(else_b) => {
@@ -121,7 +135,7 @@ impl Stmt {
                     LoxVal::Number(num) => println!("{num}"),
                     LoxVal::String(word) => println!("{word}"),
                     LoxVal::Nil => println!("Nil"),
-                    LoxVal::Functions(_) => println!("fun"),
+                    LoxVal::Functions(_, _) => println!("fun"),
                 }
                 LoxVal::Nil
             }
@@ -148,7 +162,14 @@ impl Stmt {
                 };
 
                 for blk in block {
-                    blk.eval(&mut new_env);
+                    let val = blk.eval(&mut new_env);
+
+                    if let LoxVal::Nil = val {
+                    } else {
+                        *enviroments = new_env.enclosing.unwrap().as_ref().clone();
+
+                        return val;
+                    }
                 }
                 *enviroments = new_env.enclosing.unwrap().as_ref().clone();
 
@@ -169,7 +190,7 @@ impl Expr {
                         );
                     }
                 }
-                let callee = callee.interpret(enviroments);
+                let mut callee = callee.interpret(enviroments);
 
                 let args = arguments
                     .iter()
@@ -177,7 +198,12 @@ impl Expr {
                     .map(|x| x.clone().unwrap().interpret(enviroments))
                     .collect::<Vec<_>>();
 
-                callee.call(enviroments, args);
+                let val = callee.call(enviroments, args);
+
+                if let LoxVal::Nil = val {
+                } else {
+                    return val;
+                }
 
                 LoxVal::Nil
             }

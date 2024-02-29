@@ -11,15 +11,15 @@ use scanner::Scanner;
 #[derive(Debug, Clone)]
 struct ArgsQuantityError;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Enviroments {
     enclosing: Option<Box<Enviroments>>,
     map: HashMap<String, LoxVal>,
 }
 impl Enviroments {
-    fn get(&self, id: &str) -> LoxVal {
+    fn get(&self, id: &str) -> &LoxVal {
         if self.map.contains_key(id) {
-            return self.map.get(id).unwrap().clone();
+            return self.map.get(id).unwrap();
         }
 
         match &self.enclosing {

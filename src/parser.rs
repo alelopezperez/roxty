@@ -64,6 +64,11 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(print_stmt(tokens, pos));
     }
 
+    if let TokenType::RETURN = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(return_stmt(tokens, pos));
+    }
+
     if let TokenType::FUN = tokens[*pos].token_type {
         *pos += 1;
         return Some(function_stmt(tokens, pos, "function".to_string()));
@@ -91,7 +96,20 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
 
     expr_stmt(tokens, pos)
 }
+fn return_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    let mut value: Option<Expr> = None;
+    if tokens[*pos].token_type != TokenType::SEMICOLON {
+        value = expression(tokens, pos);
+    }
+    consume(
+        TokenType::SEMICOLON,
+        "Expect 'SEMICOLON' after ".to_string(),
+        tokens,
+        pos,
+    );
 
+    Stmt::Return(value)
+}
 fn function_stmt(tokens: &Vec<Token>, pos: &mut usize, kind: String) -> Stmt {
     let name = consume(
         TokenType::IDENTIFIER,
