@@ -64,6 +64,11 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(print_stmt(tokens, pos));
     }
 
+    if let TokenType::FUN = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(function_stmt(tokens, pos, "function".to_string()));
+    }
+
     if let TokenType::LEFT_BRACE = tokens[*pos].token_type {
         *pos += 1;
         return Some(block_stmt(tokens, pos));
@@ -85,6 +90,66 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
     }
 
     expr_stmt(tokens, pos)
+}
+
+fn function_stmt(tokens: &Vec<Token>, pos: &mut usize, kind: String) -> Stmt {
+    let name = consume(
+        TokenType::IDENTIFIER,
+        "EXPECTED NAME".to_string(),
+        tokens,
+        pos,
+    )
+    .unwrap();
+
+    consume(
+        TokenType::LEFT_PAREN,
+        "Expect '(' after ".to_string(),
+        tokens,
+        pos,
+    );
+
+    let mut params = Vec::new();
+    if tokens[*pos].token_type != TokenType::RIGHT_PAREN {
+        loop {
+            if params.len() >= 255 {
+                panic!("Can't have more than 255 parameters.");
+            }
+
+            params.push(
+                consume(
+                    TokenType::IDENTIFIER,
+                    "EXPECTED NAME".to_string(),
+                    tokens,
+                    pos,
+                )
+                .unwrap(),
+            );
+
+            if tokens[*pos].token_type == TokenType::COMMA {
+                *pos += 1;
+            } else {
+                break;
+            }
+        }
+    }
+
+    consume(
+        TokenType::RIGHT_PAREN,
+        "Expect '(' after ".to_string(),
+        tokens,
+        pos,
+    );
+
+    consume(
+        TokenType::LEFT_BRACE,
+        "Expect '(' after ".to_string(),
+        tokens,
+        pos,
+    );
+
+    let body = block_stmt(tokens, pos);
+
+    Stmt::Functions(name, params, Box::new(body))
 }
 
 fn for_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {

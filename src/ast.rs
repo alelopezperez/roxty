@@ -1,5 +1,9 @@
 use core::num;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    env::args,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::{
     token::{self, Token, TokenType},
@@ -17,7 +21,7 @@ pub enum Expr {
     Logical(Box<Expr>, Token, Box<Expr>),
     Call(Box<Expr>, Token, Vec<Option<Expr>>),
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     ExprStmt(Expr),
     PrintStmt(Expr),
@@ -25,6 +29,8 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
     WhileStmt(Expr, Option<Box<Stmt>>),
+    Functions(Token, Vec<Token>, Box<Stmt>),
+    Return(),
 }
 
 #[derive(Debug, Clone)]
@@ -32,11 +38,57 @@ pub enum LoxVal {
     String(String),
     Number(f64),
     Boolean(bool),
+    Functions(Box<Stmt>),
     Nil,
 }
+
+impl LoxVal {
+    fn call(&self, enviroments: &mut Enviroments, arguments: Vec<LoxVal>) -> LoxVal {
+        if let LoxVal::Functions(fun) = self {
+            if let Stmt::Functions(_name, params, body) = fun.as_ref() {
+                let mut new_env = Enviroments {
+                    enclosing: Some(Box::new(enviroments.clone())),
+                    map: HashMap::new(),
+                };
+
+                for (i, param) in params.iter().enumerate() {
+                    new_env.define(param.lexeme.clone(), arguments[i].clone());
+                }
+
+                body.eval(&mut new_env);
+                *enviroments = new_env.enclosing.unwrap().as_ref().clone()
+            }
+        }
+
+        LoxVal::Nil
+    }
+}
+/*
+let n_env = Enviroments {
+                  enclosing: Some(Box::new(enviroments.clone())),
+                  map: HashMap::new(),
+              };
+
+              let param_values = params.
+
+              for arg in params {
+                  n_env.define(arg.lexeme.clone(), value)
+              }
+
+              *enviroments = n_env.enclosing.unwrap().as_ref().clone();
+
+              LoxVal::Nil */
 impl Stmt {
+    // pub fn call(&self, callee: &Expr, args: &Vec<Expr>, enviroments: &mut Enviroments) -> LoxVal {
+    //     todo!()
+    // }
     pub fn eval(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
+            Stmt::Functions(name, params, body) => {
+                let fun = LoxVal::Functions(Box::new(self.clone()));
+                enviroments.define(name.lexeme.clone(), fun);
+                LoxVal::Nil
+            }
             Stmt::WhileStmt(condition, body) => {
                 while is_truthy(condition.interpret(enviroments)) {
                     match body {
@@ -69,6 +121,7 @@ impl Stmt {
                     LoxVal::Number(num) => println!("{num}"),
                     LoxVal::String(word) => println!("{word}"),
                     LoxVal::Nil => println!("Nil"),
+                    LoxVal::Functions(_) => println!("fun"),
                 }
                 LoxVal::Nil
             }
@@ -108,8 +161,25 @@ impl Stmt {
 impl Expr {
     pub fn interpret(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
-            _ => {
-                todo!()
+            Expr::Call(callee, _, arguments) => {
+                if let Expr::Variable(s) = callee.as_ref() {
+                    if s.lexeme == "clock" {
+                        return LoxVal::Number(
+                            SystemTime::elapsed(&UNIX_EPOCH).unwrap().as_millis() as f64 / 1000.0,
+                        );
+                    }
+                }
+                let callee = callee.interpret(enviroments);
+
+                let args = arguments
+                    .iter()
+                    .filter(|x| x.is_some())
+                    .map(|x| x.clone().unwrap().interpret(enviroments))
+                    .collect::<Vec<_>>();
+
+                callee.call(enviroments, args);
+
+                LoxVal::Nil
             }
             Expr::Literal(val) => val.clone(),
             Expr::Unary(pro, b_expr) => {
