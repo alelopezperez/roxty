@@ -1,10 +1,10 @@
-use std::{collections::HashMap, env, fmt, io::Write};
+use std::{collections::{HashMap, VecDeque}, env, fmt, io::Write};
 mod ast;
 mod interpreter;
 mod parser;
 mod scanner;
 mod token;
-use ast::LoxVal;
+use ast::{LoxVal, Stmt};
 use parser::parse;
 use scanner::Scanner;
 
@@ -46,6 +46,32 @@ impl Enviroments {
             }
         }
     }
+}
+
+struct Resolver {
+    scopes: VecDeque<HashMap<String,bool>>
+}
+
+impl Resolver {
+    fn init(&mut self, statement: Stmt) {
+        match statement {
+            Stmt::Block(stmt) => {
+                self.begin_scope();
+                for st in stmt {
+                    self.resolve(st);
+                }
+                self.end_scope();
+            }
+            _ => {}
+        }
+    }
+    fn begin_scope(&mut self){
+        self.scopes.push_back(HashMap::new());
+    }
+    fn end_scope(&mut self){
+        self.scopes.pop_back();
+    }
+    fn resolve()
 }
 
 impl fmt::Display for ArgsQuantityError {

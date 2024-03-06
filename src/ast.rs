@@ -58,12 +58,12 @@ impl LoxVal {
                 let val = body.eval(&mut new_env);
                 if let LoxVal::Nil = val {
                 } else {
-                    *fun_env = Some(new_env.enclosing.unwrap().as_ref().clone());
+                    *fun_env = Some(new_env.clone());
 
                     return val;
                 }
 
-                *fun_env = Some(new_env.enclosing.unwrap().as_ref().clone());
+                *fun_env = Some(new_env.clone());
             }
         }
         LoxVal::Nil
