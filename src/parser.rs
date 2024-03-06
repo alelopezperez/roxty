@@ -94,7 +94,42 @@ fn statements(tokens: &Vec<Token>, pos: &mut usize) -> Option<Stmt> {
         return Some(for_stmt(tokens, pos));
     }
 
+    if let TokenType::CLASS = tokens[*pos].token_type {
+        *pos += 1;
+        return Some(class_stmt(tokens, pos));
+    }
+
     expr_stmt(tokens, pos)
+}
+
+fn class_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
+    let name = consume(
+        TokenType::IDENTIFIER,
+        "Expect class name after ".to_string(),
+        tokens,
+        pos,
+    )
+    .unwrap();
+
+    consume(
+        TokenType::LEFT_BRACE,
+        "Expect LEFT BRACE after ".to_string(),
+        tokens,
+        pos,
+    );
+    let mut methods = Vec::new();
+    while tokens[*pos].token_type != TokenType::RIGHT_BRACE && *pos < tokens.len() {
+        methods.push(function_stmt(tokens, pos, "method".to_string()))
+    }
+
+    consume(
+        TokenType::RIGHT_BRACE,
+        "Expect LEFT BRACE after ".to_string(),
+        tokens,
+        pos,
+    );
+
+    Stmt::ClassDcl(name, methods)
 }
 fn return_stmt(tokens: &Vec<Token>, pos: &mut usize) -> Stmt {
     let mut value: Option<Expr> = None;

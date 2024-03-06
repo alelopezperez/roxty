@@ -31,6 +31,16 @@ pub enum Stmt {
     WhileStmt(Expr, Option<Box<Stmt>>),
     Functions(Token, Vec<Token>, Box<Stmt>),
     Return(Option<Expr>),
+    ClassDcl(Token, Vec<Stmt>),
+}
+
+#[derive(Debug, Clone)]
+pub struct LoxKlass {
+    name: String,
+}
+
+pub struct LoxInstance {
+    klass: LoxKlass,
 }
 
 #[derive(Debug, Clone)]
@@ -40,6 +50,8 @@ pub enum LoxVal {
     Boolean(bool),
     Functions(Box<Stmt>, Option<Enviroments>),
     Nil,
+    Class(LoxKlass),
+    Instance(LoxInstance),
 }
 
 impl LoxVal {
@@ -66,6 +78,7 @@ impl LoxVal {
                 *fun_env = Some(new_env.clone());
             }
         }
+
         LoxVal::Nil
     }
 }
@@ -90,6 +103,16 @@ impl Stmt {
     // }
     pub fn eval(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
+            Stmt::ClassDcl(name, methods) => {
+                enviroments.define(
+                    name.lexeme,
+                    LoxVal::Class(LoxKlass {
+                        name: name.lexeme.clone(),
+                    }),
+                );
+
+                LoxVal::Nil
+            }
             Stmt::Return(exp) => match exp {
                 Some(expr) => expr.interpret(enviroments),
                 None => LoxVal::Nil,
