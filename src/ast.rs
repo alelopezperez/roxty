@@ -39,6 +39,7 @@ pub struct LoxKlass {
     name: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct LoxInstance {
     klass: LoxKlass,
 }
@@ -79,6 +80,12 @@ impl LoxVal {
             }
         }
 
+        if let LoxVal::Class(kclass) = self {
+            return LoxVal::Instance(LoxInstance {
+                klass: kclass.clone(),
+            });
+        }
+
         LoxVal::Nil
     }
 }
@@ -105,7 +112,7 @@ impl Stmt {
         match self {
             Stmt::ClassDcl(name, methods) => {
                 enviroments.define(
-                    name.lexeme,
+                    name.lexeme.clone(),
                     LoxVal::Class(LoxKlass {
                         name: name.lexeme.clone(),
                     }),
@@ -159,6 +166,8 @@ impl Stmt {
                     LoxVal::String(word) => println!("{word}"),
                     LoxVal::Nil => println!("Nil"),
                     LoxVal::Functions(_, _) => println!("fun"),
+                    LoxVal::Class(_) => println!("class"),
+                    LoxVal::Instance(ins) => println!("{}", ins.klass.name),
                 }
                 LoxVal::Nil
             }
