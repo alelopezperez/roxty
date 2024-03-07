@@ -14,12 +14,14 @@ use crate::{
 pub enum Expr {
     Literal(LoxVal),
     Unary(Token, Box<Expr>),
+    Set(Box<Expr>, Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
     Variable(Token),
     Assign(Token, Box<Expr>),
     Logical(Box<Expr>, Token, Box<Expr>),
     Call(Box<Expr>, Token, Vec<Option<Expr>>),
+    Get(Box<Expr>, Token),
 }
 #[derive(Debug, Clone)]
 pub enum Stmt {
@@ -42,6 +44,20 @@ pub struct LoxKlass {
 #[derive(Debug, Clone)]
 pub struct LoxInstance {
     klass: LoxKlass,
+    fields: HashMap<String, LoxVal>,
+}
+
+impl LoxInstance {
+    fn get(&self, name: Token) -> LoxVal {
+        if self.fields.contains_key(&name.lexeme) {
+            return self.fields.get(&name.lexeme).unwrap().clone();
+        }
+
+        panic!("ERRORE FIELD");
+    }
+    fn set(&mut self, name: Token, value: LoxVal) {
+        self.fields.insert(name.lexeme.clone(), value);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -83,6 +99,7 @@ impl LoxVal {
         if let LoxVal::Class(kclass) = self {
             return LoxVal::Instance(LoxInstance {
                 klass: kclass.clone(),
+                fields: HashMap::new(),
             });
         }
 
@@ -214,6 +231,25 @@ impl Stmt {
 impl Expr {
     pub fn interpret(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
+            Expr::Set(obj, name, value) => {
+                let mut obj = obj.interpret(enviroments);
+
+                if let LoxVal::Instance(ins) = &mut obj {
+                    let value = value.interpret(enviroments);
+                    ins.set(name.clone(), value.clone());
+                    enviroments.assign(name.lexeme.clone(), value.clone());
+                    value
+                } else {
+                    panic!("Only Instances");
+                }
+            }
+            Expr::Get(expr, name) => {
+                let ans = expr.interpret(enviroments);
+                if let LoxVal::Instance(instance) = ans {
+                    return instance.get(name.clone());
+                }
+                panic!("ONLY CLASS CAN HAVE FIELDS");
+            }
             Expr::Call(callee, _, arguments) => {
                 if let Expr::Variable(s) = callee.as_ref() {
                     if s.lexeme == "clock" {

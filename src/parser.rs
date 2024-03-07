@@ -399,6 +399,8 @@ fn assignment(tokens: &Vec<Token>, pos: &mut usize) -> Option<Expr> {
 
         if let Expr::Variable(name) = expr.clone().unwrap() {
             return Some(Expr::Assign(name, Box::new(value.unwrap())));
+        } else if let Expr::Get(obj, name) = expr.clone().unwrap() {
+            return Some(Expr::Set(obj, name, Box::new(value.unwrap())));
         }
         error(tokens, pos, "Invalid assignment target.".to_string());
     }
@@ -542,6 +544,16 @@ fn call(tokens: &Vec<Token>, pos: &mut usize) -> Expr {
         if tokens[*pos].token_type == TokenType::LEFT_PAREN {
             *pos += 1;
             expr = finish_call(expr, tokens, pos);
+        } else if tokens[*pos].token_type == TokenType::DOT {
+            *pos += 1;
+            let name = consume(
+                TokenType::IDENTIFIER,
+                "Expected property name".to_string(),
+                tokens,
+                pos,
+            )
+            .unwrap();
+            expr = Expr::Get(Box::new(expr), name);
         } else {
             break;
         }
