@@ -97,10 +97,12 @@ impl LoxVal {
         }
 
         if let LoxVal::Class(kclass) = self {
-            return LoxVal::Instance(LoxInstance {
+            let ins = LoxVal::Instance(LoxInstance {
                 klass: kclass.clone(),
                 fields: HashMap::new(),
             });
+            enviroments.define(kclass.name.clone(), ins);
+            return enviroments.get(&kclass.name).clone();
         }
 
         LoxVal::Nil
@@ -232,12 +234,12 @@ impl Expr {
     pub fn interpret(&self, enviroments: &mut Enviroments) -> LoxVal {
         match self {
             Expr::Set(obj, name, value) => {
-                let mut obj = obj.interpret(enviroments);
+                let mut nobj = obj.interpret(enviroments);
 
-                if let LoxVal::Instance(ins) = &mut obj {
+                if let LoxVal::Instance(ins) = &mut nobj {
                     let value = value.interpret(enviroments);
                     ins.set(name.clone(), value.clone());
-                    enviroments.assign(name.lexeme.clone(), value.clone());
+                    enviroments.assign(ins.klass.name.clone(), value.clone());
                     value
                 } else {
                     panic!("Only Instances");
