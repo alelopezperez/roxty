@@ -155,6 +155,7 @@ mod chunk;
 mod common;
 use chunk::Chunk;
 use chunk::OpCode;
+mod debug;
 
 fn main() {
     println!("Hello RLOX");

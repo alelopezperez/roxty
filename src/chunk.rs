@@ -6,7 +6,7 @@ pub enum OpCode {
 }
 
 pub struct Chunk {
-    code: Vec<u8>,
+    pub code: Vec<u8>,
 }
 
 impl Chunk {
