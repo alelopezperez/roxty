@@ -8,11 +8,19 @@ pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     }
 }
 
-pub fn disassemble_instruction(chunk: &Chunk, offset: &usize) -> usize {
-    print!(" {:#04}", offset);
+fn disassemble_instruction(chunk: &Chunk, offset: &usize) -> usize {
+    print!("{:#04} ", offset);
 
-    match chunk.code[*offset] as OpCode {
-        OpCode::OP_RETURN => {}
+    match chunk.code[*offset].into() {
+        OpCode::OP_RETURN => simple_instruction("OP_RETURN", offset),
+        _ => {
+            println!("Unknown opcode");
+            offset + 1
+        }
     }
-    todo!()
+}
+
+fn simple_instruction(name: &str, offset: &usize) -> usize {
+    println!("{}", name);
+    offset + 1
 }

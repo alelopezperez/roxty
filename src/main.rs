@@ -155,11 +155,12 @@ mod chunk;
 mod common;
 use chunk::Chunk;
 use chunk::OpCode;
+
+use crate::debug::disassemble_chunk;
 mod debug;
 
 fn main() {
-    println!("Hello RLOX");
     let mut chunk = Chunk::init_chunk();
     chunk.write_chunk(OpCode::OP_RETURN as u8);
-    println!("{}", OpCode::OP_RETURN as u8);
+    disassemble_chunk(&chunk, "test chunk");
 }
