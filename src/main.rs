@@ -153,14 +153,21 @@
 // }
 mod chunk;
 mod common;
+mod debug;
+mod value;
+
 use chunk::Chunk;
 use chunk::OpCode;
-
-use crate::debug::disassemble_chunk;
-mod debug;
+use debug::disassemble_chunk;
 
 fn main() {
     let mut chunk = Chunk::init_chunk();
-    chunk.write_chunk(OpCode::OP_RETURN as u8);
-    disassemble_chunk(&chunk, "test chunk");
+
+    let constant = chunk.add_constant(1.2);
+    chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
+    chunk.write_chunk(constant, 123);
+
+    chunk.write_chunk(OpCode::OP_RETURN as u8, 123);
+
+    disassemble_chunk(&chunk, "TEST CHUNk");
 }
