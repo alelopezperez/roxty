@@ -155,6 +155,7 @@ mod chunk;
 mod common;
 mod debug;
 mod value;
+mod vm;
 
 use chunk::Chunk;
 use chunk::OpCode;
