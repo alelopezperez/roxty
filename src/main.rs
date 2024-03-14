@@ -164,7 +164,8 @@ use vm::VM;
 
 fn main() {
     let mut chunk = Chunk::init_chunk();
-    let mut vm = VM::init_vm();
+    let mut vm = VM::new();
+    vm.init_vm();
 
     let constant = chunk.add_constant(1.2);
     chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
