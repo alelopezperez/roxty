@@ -11,7 +11,7 @@ pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     }
 }
 
-fn disassemble_instruction(chunk: &Chunk, offset: &usize) -> usize {
+pub fn disassemble_instruction(chunk: &Chunk, offset: &usize) -> usize {
     print!("{:#04} ", offset);
 
     if *offset > 0 && chunk.lines[*offset] == chunk.lines[*offset - 1] {
@@ -23,7 +23,7 @@ fn disassemble_instruction(chunk: &Chunk, offset: &usize) -> usize {
     if let Ok(chunk_instruction) = chunk.code[*offset].try_into() {
         match chunk_instruction {
             OpCode::OP_CONSTANT => constant_instruction("OP_CONSTANT", chunk, offset),
-
+            OpCode::OP_NEGATE => simple_instruction("OP_NEGATE", offset),
             OpCode::OP_RETURN => simple_instruction("OP_RETURN", offset),
         }
     } else {

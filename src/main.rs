@@ -170,8 +170,11 @@ fn main() {
     let constant = chunk.add_constant(1.2);
     chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
     chunk.write_chunk(constant, 123);
+
+    chunk.write_chunk(OpCode::OP_NEGATE as u8, 123);
     chunk.write_chunk(OpCode::OP_RETURN as u8, 123);
-    disassemble_chunk(&chunk, "TEST CHUNk");
+
+    // disassemble_chunk(&chunk, "TEST CHUNk");
 
     vm.interpret(&mut chunk);
 }

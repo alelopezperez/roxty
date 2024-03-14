@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use crate::{
     chunk::{Chunk, OpCode},
+    debug::{disassemble_chunk, disassemble_instruction},
     value::{print_value, Value},
 };
 const STACK_MAX: usize = 256;
@@ -34,6 +35,7 @@ impl<'a> VM<'a> {
     }
 
     pub fn pop(&mut self) -> Value {
+        self.stack_top -= 1;
         self.stack.pop().unwrap()
     }
     pub fn new() -> Self {
@@ -61,17 +63,27 @@ impl<'a> VM<'a> {
     pub fn run(&mut self) -> Result<InterpretResultError, InterpretResultError> {
         #[allow(clippy::never_loop)]
         loop {
+            #[cfg(debug)]
+            {
+                disassemble_instruction(self.chunk.unwrap(), &(self.ip() as usize));
+            }
+
             let instruction = self.chunk.unwrap().code[self.ip];
             self.ip += 1;
             if let Ok(instruction) = instruction.try_into() {
                 match instruction {
                     OpCode::OP_RETURN => {
+                        print_value(&self.pop());
+                        println!();
                         return Ok(InterpretResultError::INTERPRET_OK);
                     }
+                    OpCode::OP_NEGATE => {
+                        let val = self.pop();
+                        self.push(-val);
+                    }
                     OpCode::OP_CONSTANT => {
-                        let value: f64 = self.chunk.unwrap().constants.values[self.ip() as usize];
-                        print_value(&value);
-                        println!();
+                        let constant = self.chunk.unwrap().constants.values[self.ip() as usize];
+                        self.push(constant);
                         self.ip += 1;
                     }
                 }
