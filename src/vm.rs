@@ -63,7 +63,6 @@ impl<'a> VM<'a> {
     pub fn run(&mut self) -> Result<InterpretResultError, InterpretResultError> {
         macro_rules! binary_op {
             ($op:tt) => {
-                println!("{}",1 $op 2);
                 let b:f64 = self.pop();
                 let a:f64 = self.pop();
                 self.push(a $op b);
@@ -71,8 +70,13 @@ impl<'a> VM<'a> {
         }
         #[allow(clippy::never_loop)]
         loop {
-            #[cfg(debug)]
+            #[cfg(feature = "debug")]
             {
+                for slot in &self.stack {
+                    print!("[ ");
+                    print_value(slot);
+                    print!(" ]")
+                }
                 disassemble_instruction(self.chunk.unwrap(), &(self.ip() as usize));
             }
 
