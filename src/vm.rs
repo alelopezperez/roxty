@@ -61,6 +61,14 @@ impl<'a> VM<'a> {
     }
 
     pub fn run(&mut self) -> Result<InterpretResultError, InterpretResultError> {
+        macro_rules! binary_op {
+            ($op:tt) => {
+                println!("{}",1 $op 2);
+                let b:f64 = self.pop();
+                let a:f64 = self.pop();
+                self.push(a $op b);
+            };
+        }
         #[allow(clippy::never_loop)]
         loop {
             #[cfg(debug)]
@@ -80,6 +88,18 @@ impl<'a> VM<'a> {
                     OpCode::OP_NEGATE => {
                         let val = self.pop();
                         self.push(-val);
+                    }
+                    OpCode::OP_ADD => {
+                        binary_op! {+};
+                    }
+                    OpCode::OP_SUBTRACT => {
+                        binary_op! {-};
+                    }
+                    OpCode::OP_DIVIDE => {
+                        binary_op! {/};
+                    }
+                    OpCode::OP_MULTIPLY => {
+                        binary_op! {*};
                     }
                     OpCode::OP_CONSTANT => {
                         let constant = self.chunk.unwrap().constants.values[self.ip() as usize];

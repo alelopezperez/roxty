@@ -171,6 +171,18 @@ fn main() {
     chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
     chunk.write_chunk(constant, 123);
 
+    let constant = chunk.add_constant(3.4);
+    chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
+    chunk.write_chunk(constant, 123);
+
+    chunk.write_chunk(OpCode::OP_ADD as u8, 123);
+
+    let constant = chunk.add_constant(5.6);
+    chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
+    chunk.write_chunk(constant, 123);
+
+    chunk.write_chunk(OpCode::OP_DIVIDE as u8, 123);
+
     chunk.write_chunk(OpCode::OP_NEGATE as u8, 123);
     chunk.write_chunk(OpCode::OP_RETURN as u8, 123);
 
