@@ -153,40 +153,65 @@
 // }
 mod chunk;
 mod common;
+mod compiler;
 mod debug;
+mod scanner;
 mod value;
 mod vm;
 
-use chunk::Chunk;
-use chunk::OpCode;
-use debug::disassemble_chunk;
+use std::env;
+use std::io::Write;
+use std::process::ExitCode;
+
+use vm::InterpretResultError;
 use vm::VM;
 
-fn main() {
-    let mut chunk = Chunk::init_chunk();
+fn main() -> ExitCode {
     let mut vm = VM::new();
     vm.init_vm();
 
-    let constant = chunk.add_constant(1.2);
-    chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
-    chunk.write_chunk(constant, 123);
+    let args: Vec<String> = env::args().collect();
+    if args.len() == 1 {
+        repl();
+    } else if args.len() == 2 {
+        return run_file(&args[1], &mut vm);
+    } else {
+        panic!("Usage: roxty [path]\n");
+    }
 
-    let constant = chunk.add_constant(3.4);
-    chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
-    chunk.write_chunk(constant, 123);
+    ExitCode::SUCCESS
+}
 
-    chunk.write_chunk(OpCode::OP_ADD as u8, 123);
+fn repl() {
+    loop {
+        let mut line = String::new();
+        print!("> ");
+        std::io::stdout().flush().unwrap();
+        let check = std::io::stdin()
+            .read_line(&mut line)
+            .expect("Failed to read line");
+        if check == 0 {
+            break;
+        }
 
-    let constant = chunk.add_constant(5.6);
-    chunk.write_chunk(OpCode::OP_CONSTANT as u8, 123);
-    chunk.write_chunk(constant, 123);
+        // interpret(line);
+    }
+}
 
-    chunk.write_chunk(OpCode::OP_DIVIDE as u8, 123);
+fn run_file(path: &str, vm: &mut VM) -> ExitCode {
+    match std::fs::read_to_string(path) {
+        Ok(source) => {
+            let result = vm.interpret(source);
 
-    chunk.write_chunk(OpCode::OP_NEGATE as u8, 123);
-    chunk.write_chunk(OpCode::OP_RETURN as u8, 123);
-
-    // disassemble_chunk(&chunk, "TEST CHUNk");
-
-    vm.interpret(&mut chunk);
+            match result {
+                Ok(_) => ExitCode::SUCCESS,
+                Err(error) => match error {
+                    InterpretResultError::INTERPRET_COMPILE_ERROR => ExitCode::from(65),
+                    InterpretResultError::INTERPRET_RUNTIME_ERROR => ExitCode::from(70),
+                    InterpretResultError::INTERPRET_OK => ExitCode::SUCCESS,
+                },
+            }
+        }
+        Err(_) => ExitCode::from(74),
+    }
 }

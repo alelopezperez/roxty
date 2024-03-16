@@ -1,7 +1,6 @@
-use std::collections::VecDeque;
-
 use crate::{
     chunk::{Chunk, OpCode},
+    compiler::compile,
     debug::{disassemble_chunk, disassemble_instruction},
     value::{print_value, Value},
 };
@@ -53,11 +52,10 @@ impl<'a> VM<'a> {
 
     pub fn interpret(
         &mut self,
-        chunk: &'a mut Chunk,
+        source: String,
     ) -> Result<InterpretResultError, InterpretResultError> {
-        self.chunk = Some(chunk);
-        // ip to curent code in chunk
-        self.run()
+        compile(source);
+        Ok(InterpretResultError::INTERPRET_OK)
     }
 
     pub fn run(&mut self) -> Result<InterpretResultError, InterpretResultError> {
@@ -77,7 +75,7 @@ impl<'a> VM<'a> {
                     print_value(slot);
                     print!(" ]")
                 }
-                disassemble_instruction(self.chunk.unwrap(), &(self.ip() as usize));
+                disassemble_instruction(self.chunk.unwrap(), &(self.ip as usize));
             }
 
             let instruction = self.chunk.unwrap().code[self.ip];
