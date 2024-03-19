@@ -109,7 +109,7 @@ impl Scanner {
 
     pub fn peek(&self) -> char {
         if self.is_at_end() {
-            println!("finiito");
+            return '\0';
         }
         self.source.chars().nth(self.current).unwrap()
     }
@@ -181,6 +181,7 @@ impl Scanner {
     }
 
     fn identifier(&mut self) -> Token {
+        println!("here?");
         while self.peek().is_ascii_alphanumeric() {
             self.advance();
         }
@@ -236,6 +237,7 @@ impl Scanner {
         TokenType::TOKEN_IDENTIFIER
     }
     fn number(&mut self) -> Token {
+        println!("here2");
         while self.peek().is_ascii_digit() {
             self.advance();
         }
@@ -281,7 +283,7 @@ impl Scanner {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current == self.source.len()
+        self.current + 1 == self.source.len()
     }
 
     fn make_token(&self, typo: TokenType) -> Token {
