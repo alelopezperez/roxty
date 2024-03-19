@@ -163,18 +163,20 @@ use std::env;
 use std::io::Write;
 use std::process::ExitCode;
 
+use chunk::Chunk;
 use vm::InterpretResultError;
 use vm::VM;
 
 fn main() -> ExitCode {
     let mut vm = VM::new();
     vm.init_vm();
+    let mut chunk = Chunk::init_chunk();
 
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
-        repl();
+        repl(&mut vm, &mut chunk);
     } else if args.len() == 2 {
-        return run_file(&args[1], &mut vm);
+        return run_file(&args[1], &mut vm, &mut chunk);
     } else {
         panic!("Usage: roxty [path]\n");
     }
@@ -182,7 +184,7 @@ fn main() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn repl() {
+fn repl<'a>(vm: &mut VM<'a>, chunk: &'a mut Chunk) {
     loop {
         let mut line = String::new();
         print!("> ");
@@ -194,14 +196,16 @@ fn repl() {
             break;
         }
 
-        // interpret(line);
+        // vm.interpret(line, chunk);
     }
 }
 
-fn run_file(path: &str, vm: &mut VM) -> ExitCode {
+fn run_file<'a>(path: &str, vm: &mut VM<'a>, chunk: &'a mut Chunk) -> ExitCode {
+    // let mut chunk = Chunk::init_chunk();
+
     match std::fs::read_to_string(path) {
         Ok(source) => {
-            let result = vm.interpret(source);
+            let result = vm.interpret(source, chunk);
 
             match result {
                 Ok(_) => ExitCode::SUCCESS,

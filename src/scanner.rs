@@ -54,6 +54,8 @@ pub enum TokenType {
     TOKEN_ERROR,
     TOKEN_EOF,
 }
+
+#[derive(Debug, Clone)]
 pub struct Token {
     pub typo: TokenType,
     pub start: usize,
@@ -76,8 +78,12 @@ impl Scanner {
             let c = self.peek();
 
             match c {
-                ' ' => {}
-                '\r' => {}
+                ' ' => {
+                    self.advance();
+                }
+                '\r' => {
+                    self.advance();
+                }
                 '\t' => {
                     self.advance();
                 }
@@ -102,6 +108,9 @@ impl Scanner {
     }
 
     pub fn peek(&self) -> char {
+        if self.is_at_end() {
+            println!("finiito");
+        }
         self.source.chars().nth(self.current).unwrap()
     }
 

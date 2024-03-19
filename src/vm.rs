@@ -1,5 +1,5 @@
 use crate::{
-    chunk::{Chunk, OpCode},
+    chunk::{self, Chunk, OpCode},
     compiler::compile,
     debug::{disassemble_chunk, disassemble_instruction},
     value::{print_value, Value},
@@ -53,9 +53,20 @@ impl<'a> VM<'a> {
     pub fn interpret(
         &mut self,
         source: String,
+        chunk: &'a mut Chunk,
     ) -> Result<InterpretResultError, InterpretResultError> {
-        compile(source);
-        Ok(InterpretResultError::INTERPRET_OK)
+        // let mut chunk = Chunk::init_chunk();
+
+        if compile(source, chunk) {
+            return Err(InterpretResultError::INTERPRET_COMPILE_ERROR);
+        }
+
+        self.chunk = Some(chunk);
+        self.ip = self.chunk.unwrap().code[0] as usize;
+
+        let result = self.run();
+
+        return result;
     }
 
     pub fn run(&mut self) -> Result<InterpretResultError, InterpretResultError> {
