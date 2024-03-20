@@ -181,7 +181,6 @@ impl Scanner {
     }
 
     fn identifier(&mut self) -> Token {
-        println!("here?");
         while self.peek().is_ascii_alphanumeric() {
             self.advance();
         }
@@ -237,7 +236,6 @@ impl Scanner {
         TokenType::TOKEN_IDENTIFIER
     }
     fn number(&mut self) -> Token {
-        println!("here2");
         while self.peek().is_ascii_digit() {
             self.advance();
         }

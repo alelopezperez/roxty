@@ -8,6 +8,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+#[repr(u8)]
 enum Precedence {
     PREC_NONE,
     PREC_ASSIGNMENT, // =
@@ -48,7 +49,7 @@ impl From<u8> for Precedence {
             PREC_UNARY => Precedence::PREC_UNARY,
             PREC_CALL => Precedence::PREC_CALL,
             PREC_PRIMARY => Precedence::PREC_PRIMARY,
-            _ => Precedence::PREC_NONE,
+            _ => panic!("WWHHHHAT"),
         }
     }
 }
@@ -148,7 +149,7 @@ pub fn compile(source: String, chunk: &mut Chunk) -> bool {
         &mut parser,
         &mut scanner,
     );
-    end_compiler(&mut parser, &mut compiling_chunk);
+    end_compiler(&mut parser, compiling_chunk);
     parser.had_error
 }
 
@@ -258,7 +259,9 @@ fn unary(parser: &mut Parser, scanner: &mut Scanner, compiling_chunk: &mut Chunk
 
 fn binary(parser: &mut Parser, scanner: &mut Scanner, compiling_chunk: &mut Chunk) {
     let operator_type = parser.previous.as_ref().unwrap().typo;
+
     let rule = get_rule(operator_type);
+
     parse_precedence(
         Precedence::from(rule.precedence as u8 + 1),
         parser,
@@ -291,7 +294,9 @@ fn parse_precedence(
     chunk: &mut Chunk,
 ) {
     let mut precedence = precedence;
+
     parser.advance(scanner);
+
     let prefix_rule = get_rule(parser.previous.as_ref().unwrap().typo).prefix;
     match prefix_rule {
         None => error(
@@ -303,7 +308,7 @@ fn parse_precedence(
         Some(prefix) => {
             prefix(parser, scanner, chunk);
             while (precedence.clone() as u8)
-                < (get_rule(parser.current.as_ref().unwrap().typo).precedence as u8)
+                <= (get_rule(parser.current.as_ref().unwrap().typo).precedence as u8)
             {
                 parser.advance(scanner);
                 let infix = get_rule(parser.previous.as_ref().unwrap().typo)
